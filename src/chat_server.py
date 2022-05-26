@@ -15,6 +15,7 @@ while True:
     print(f"message : {msg}")
     if msg == "/exit":
         break
+    listen_socket.sendall(msg.encode(encoding='utf-8'))
 
 listen_socket.close()
 server_socket.close()
