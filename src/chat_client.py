@@ -42,7 +42,7 @@ class ClientWindow():
         self.bold_font = None               # 굵은 글씨 폰트 (닉네임에 사용)
         self.manager = None
 
-    def set_window(self):
+    def set_window(self): # 윈도우 세팅
         # 전체 윈도우 생성 및 설정
         self.window = tk.Tk()
         self.window.title("hell(o) gint!")
@@ -69,7 +69,7 @@ class ClientWindow():
         # 창닫기 버튼 누를 시 exit_window 실행
         self.window.protocol("WM_DELETE_WINDOW", self.exit_window)
 
-    def exit_window(self):
+    def exit_window(self): # 윈도우 나가기. 서버에 종료 알리고 소켓 닫기
         exit_msg = "/exit"
         self.manager.send_msg(exit_msg)
         self.manager.disconnect_from_server()
@@ -86,7 +86,7 @@ class ClientWindow():
 
         self.manager.send_msg(msg)
 
-    def run(self):
+    def run(self): # 채팅 클라이언트(메시지 매니저 + 윈도우) 실행
         self.manager = MessageManager()
         self.manager.connect_to_server()
         self.set_window()
@@ -96,7 +96,7 @@ class ClientWindow():
         
         self.window.mainloop()
 
-    def chat_stream_to_field(self):
+    def chat_stream_to_field(self): # 서버로부터 계속해서 메시지 받으며 채팅창에 출력
         while True:
             msg = self.manager.receive_msg_check()
             if not msg:

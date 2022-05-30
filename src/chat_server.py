@@ -9,24 +9,24 @@ class Room: # 채팅방
         self.client_list = []
         self.server_socket = None
 
-    def ready_to_connect(self):
+    def ready_to_connect(self): # 서버 소켓 생성 및 bind, listen
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((IP, PORT))
         self.server_socket.listen()
         print("Start server..")
     
-    def enter_client(self, c):
+    def enter_client(self, c): # 클라이언트 입장
         self.client_list.append(c)
 
-    def leave_client(self, c):
+    def leave_client(self, c): # 클라이언트 퇴장
         self.client_list.remove(c)
 
-    def push_msg_to_room(self, msg):  # 채팅방에 있는 모든 사람한테 메시지 전송
+    def push_msg_to_room(self, msg): # 채팅방에 있는 모든 사람한테 메시지 전송
         for c in self.client_list:
             c.send_msg(msg)
 
-    def run(self):
+    def run(self): # 채팅 서버 실행
         self.ready_to_connect()
 
         while True:
@@ -80,7 +80,7 @@ class ClientManager: # 클라이언트, 유저 관리자
             msg = self.nickname+': '+ msg
             self.room.push_msg_to_room(msg) # 모든 사용자에 메시지 전송
 
-    def leave(self):
+    def leave(self): # 퇴장
         self.room.leave_client(self)
         self.room.push_msg_to_room(self.nickname + '님이 퇴장하셨습니다.')
         self.listen_socket.close()
