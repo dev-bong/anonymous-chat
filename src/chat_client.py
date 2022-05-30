@@ -1,6 +1,7 @@
 import socket
 import threading
 import tkinter as tk
+import tkinter.font as tk_font
 from tkinter import scrolledtext
 import sys
 
@@ -40,12 +41,20 @@ class ClientWindow():
         self.send_button = None             # 전송 버튼
         self.chat_contents_field = None     # 채팅 내용이 보여지는 필드
         self.bold_font = None               # 굵은 글씨 폰트 (닉네임에 사용)
+        self.colors = {                     # 색상들. key는 색상 코드 (닉네임에 사용)
+            1 : "dark orchid",
+            2 : "turquoise",
+            3 : "dark salmon",
+            4 : "pink",
+            5 : "DodgerBlue4",
+            6 : "SpringGreen3"
+        }                                   # 일단 6개.. 추후 더 추가하도록
         self.manager = None
 
     def set_window(self): # 윈도우 세팅
         # 전체 윈도우 생성 및 설정
         self.window = tk.Tk()
-        self.window.title("hell(o) gint!")
+        self.window.title("hello!")
         self.window.geometry("400x400+100+100") # 긴급탈출 넣을거면 400x450으로
         self.window.resizable(False, False) # 창 크기 조절 가능 여부 (상하, 좌우)
 
@@ -53,6 +62,7 @@ class ClientWindow():
         self.chat_contents_field = scrolledtext.ScrolledText(self.window, width = 50, height = 27)
         self.chat_input_box = tk.Entry(self.window, width=40)
         self.send_button = tk.Button(self.window, width=10, text="전송")
+        self.bold_font = tk_font.Font(weight="bold") # 닉네임은 굵게
 
         # 위젯 배치
         self.chat_contents_field.place(x=20, y=0)
@@ -68,6 +78,10 @@ class ClientWindow():
 
         # 창닫기 버튼 누를 시 exit_window 실행
         self.window.protocol("WM_DELETE_WINDOW", self.exit_window)
+
+        # 색상 태그들 생성
+        for color_code in self.colors:
+            self.chat_contents_field.tag_config(str(color_code), foreground=self.colors[color_code], font=self.bold_font)
 
     def exit_window(self): # 윈도우 나가기. 서버에 종료 알리고 소켓 닫기
         exit_msg = "/exit"
@@ -104,9 +118,28 @@ class ClientWindow():
                 break
             msg += "\n"
 
+            # 메시지에 색상 코드가 있을 경우 추출
+            if "|" in msg:
+                color_code, msg = msg.split("|", maxsplit=1)
+                cid = msg.split(":", maxsplit=1)[0]
+            else:
+                color_code = None
+                cid = None
+
             # chat contents field에 메시지 출력
             self.chat_contents_field.insert("end",msg) # insert vs end
             self.chat_contents_field.see("end")
+
+            # 닉네임에 색 입히기
+            if color_code:
+                st = self.chat_contents_field.search(cid, "end-2l", "end") # 끝에서 2라인정도? 검색
+                while st:
+                    st_e = st.split(".")[1]
+                    l = len(cid)
+                    end = st + f"+{l}c"
+                    if st_e == "0": # 각 라인의 처음에서 검색된게 아니면 색상 입히지 않음 (채팅 내용에서 언급되는 닉네임에 색상 X)
+                        self.chat_contents_field.tag_add(color_code, st, end)
+                    st = self.chat_contents_field.search(cid, end, "end")
 
 def client_start():
     client_window = ClientWindow()

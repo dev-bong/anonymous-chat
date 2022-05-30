@@ -8,6 +8,8 @@ class Room: # 채팅방
     def __init__(self):
         self.client_list = []
         self.server_socket = None
+        self.usable_colors = [1,2,3,4,5,6] # 사용 가능한 색상코드들
+        self.colors_in_use = [] # 사용중인 색상코드들
 
     def ready_to_connect(self): # 서버 소켓 생성 및 bind, listen
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,6 +27,16 @@ class Room: # 채팅방
     def push_msg_to_room(self, msg): # 채팅방에 있는 모든 사람한테 메시지 전송
         for c in self.client_list:
             c.send_msg(msg)
+
+    def give_color(self, nickname): # 닉네임에 색상코드 부여
+        color = self.usable_colors.pop(0)
+        self.colors_in_use.append(color)
+        return str(color) + "|" + nickname # bong -> 2|bong 이런식으로.. | 앞에 숫자가 색상코드
+
+    def take_color(self, nickname): # 닉네임 색상코드 반환
+        color = int(nickname.split("|")[0])
+        self.colors_in_use.remove(color)
+        self.usable_colors.append(color)
 
     def run(self): # 채팅 서버 실행
         self.ready_to_connect()
@@ -68,6 +80,8 @@ class ClientManager: # 클라이언트, 유저 관리자
         msg = self.nickname + '님이 입장하셨습니다'
         self.room.push_msg_to_room(msg)
 
+        self.nickname = self.room.give_color(self.nickname) # 닉네임에 색상코드 부여
+
         while True:
             msg = self.receive_msg_check()  # 사용자가 전송한 메시지 읽음
             if not msg:
@@ -82,6 +96,7 @@ class ClientManager: # 클라이언트, 유저 관리자
 
     def leave(self): # 퇴장
         self.room.leave_client(self)
+        self.room.take_color(self.nickname) # 퇴장 시 색상코드 반환
         self.room.push_msg_to_room(self.nickname + '님이 퇴장하셨습니다.')
         self.listen_socket.close()
         print("Current clients :",self.room.client_list)
