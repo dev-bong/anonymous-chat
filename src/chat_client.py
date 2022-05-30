@@ -70,8 +70,10 @@ class ClientWindow():
         self.send_button.place(x=310, y=370)
 
         # 위젯 - 이벤트 묶기
-        self.send_button.bind("<Button-1>", self.press_send_button)              # 전송 버튼을 마우스 좌클릭하면 send_msg 실행하도록 (<Button-1> : 마우스 좌클릭)
-        self.chat_input_box.bind("<Return>", self.press_send_button)             # input box에 Enter키가 입력되면 send_msg 실행하도록 (<Return> : Enter 버튼 입력)
+        self.send_button.bind("<Button-1>", self.press_send_button)             # 전송 버튼을 마우스 좌클릭하면 send_msg 실행하도록 (<Button-1> : 마우스 좌클릭)
+        self.chat_input_box.bind("<Return>", self.press_send_button)            # input box에 Enter키가 입력되면 send_msg 실행하도록 (<Return> : Enter 버튼 입력)
+        self.chat_contents_field.bind("<Key>", lambda e: "break")               # 채팅필드 키 입력 불가
+        self.chat_contents_field.bind("<Button-1>", lambda e: "break")          # 채팅필드 클릭 불가
 
         # 초기 메시지
         self.chat_contents_field.insert("insert","닉네임을 입력하세요\n")
@@ -132,7 +134,7 @@ class ClientWindow():
 
             # 닉네임에 색 입히기
             if color_code:
-                st = self.chat_contents_field.search(cid, "end-2l", "end") # 끝에서 2라인정도? 검색
+                st = self.chat_contents_field.search(cid, "end-2l", "end") # 끝에서 2라인정도? 클라이언트 닉네임 검색
                 while st:
                     st_e = st.split(".")[1]
                     l = len(cid)
