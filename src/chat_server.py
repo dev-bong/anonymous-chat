@@ -11,6 +11,7 @@ class Room:  # 채팅방
         self.server_socket = None
         self.usable_colors = [1, 2, 3, 4, 5, 6]  # 사용 가능한 색상코드들
         self.colors_in_use = []  # 사용중인 색상코드들
+        self.chosung_quiz = ""
 
     def ready_to_connect(self):  # 서버 소켓 생성 및 bind, listen
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,11 +83,13 @@ class ClientManager:  # 클라이언트, 유저 관리자
             print("Client :", self.room.client_list)
             return
         msg = self.nickname + "님이 입장하셨습니다"
+        only_nickname = self.nickname
         self.room.push_msg_to_room(msg)
 
         self.nickname = self.room.give_color(self.nickname)  # 닉네임에 색상코드 부여
 
         while True:
+            print("초성퀴즈", self.room.chosung_quiz)
             msg = self.receive_msg_check()  # 사용자가 전송한 메시지 읽음
             if not msg:
                 self.leave()
@@ -94,6 +97,18 @@ class ClientManager:  # 클라이언트, 유저 관리자
             elif msg == "/exit":  # 종료 메시지이면 종료
                 self.leave()
                 break
+            elif msg.startswith("/문제 "):  # 초성퀴즈 문제 등록
+                msg = "퀴즈 : " + self.put_chosung_quiz(msg)
+                self.room.push_msg_to_room(msg)
+                continue
+            elif (
+                self.room.chosung_quiz and msg == self.room.chosung_quiz
+            ):  # 초성퀴즈 정답 맞춘 경우
+                ans = self.room.chosung_quiz
+                msg = f"{only_nickname} 님 정답입니다! ({ans})"
+                self.room.push_msg_to_room(msg)
+                self.room.chosung_quiz = ""
+                continue
             print(msg, type(msg))
             msg = self.nickname + ": " + msg
             self.room.push_msg_to_room(msg)  # 모든 사용자에 메시지 전송
@@ -104,6 +119,39 @@ class ClientManager:  # 클라이언트, 유저 관리자
         self.room.push_msg_to_room(self.nickname + "님이 퇴장하셨습니다.")
         self.listen_socket.close()
         print("Current clients :", self.room.client_list)
+
+    def put_chosung_quiz(self, msg):
+        answer = msg.lstrip("/문제 ")
+        chosung = getChosung(answer)
+        self.room.chosung_quiz = answer.strip(" ")
+        return chosung
+
+
+def getChosung(text):
+    """
+    코드 출처 : http://smlee729.github.io/python/natural%20language%20processing/2015/12/29/korean-letter-processing-search.html
+    """
+
+    CHOSUNG_START_LETTER = 4352
+    JAMO_START_LETTER = 44032
+    JAMO_END_LETTER = 55203
+    JAMO_CYCLE = 588
+
+    def isHangul(ch):
+        return ord(ch) >= JAMO_START_LETTER and ord(ch) <= JAMO_END_LETTER
+
+    result = ""
+
+    for ch in text:
+        if ch == " ":
+            result += " "
+            continue
+        if isHangul(ch):
+            result += chr(
+                int((ord(ch) - JAMO_START_LETTER) / JAMO_CYCLE + CHOSUNG_START_LETTER)
+            )
+
+    return result
 
 
 def server_start():
