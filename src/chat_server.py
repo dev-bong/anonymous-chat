@@ -98,7 +98,7 @@ class ClientManager:  # 클라이언트, 유저 관리자
                 self.leave()
                 break
             elif msg.startswith("/문제 "):  # 초성퀴즈 문제 등록
-                msg = "퀴즈 : " + self.put_chosung_quiz(msg)
+                msg = "문제 : " + self.put_chosung_quiz(msg)
                 self.room.push_msg_to_room(msg)
                 continue
             elif (
@@ -121,7 +121,7 @@ class ClientManager:  # 클라이언트, 유저 관리자
         print("Current clients :", self.room.client_list)
 
     def put_chosung_quiz(self, msg):
-        answer = msg.lstrip("/문제 ")
+        _, answer = msg.split(" ", maxsplit=1)
         chosung = getChosung(answer)
         self.room.chosung_quiz = answer.strip(" ")
         return chosung
