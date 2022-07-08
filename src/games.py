@@ -1,5 +1,6 @@
 from random import randint
 
+
 class Game:
     pass
 
@@ -61,7 +62,7 @@ class NumberBaseball(Game):
     def __init__(self):
         self.answer = ""
 
-    def make_random_answer(self): # 중복없는 4자리 난수 생성
+    def make_random_answer(self):  # 중복없는 4자리 난수 생성
         avoid_dupl = []
         while len(self.answer) < 4:
             rand_num = randint(0, 9)
@@ -80,7 +81,7 @@ class NumberBaseball(Game):
         else:
             return False
 
-    def guess_answer(self, user_guess): # 유저 추측에 대한 결과. user_guess는 string으로 된 4자리 숫자
+    def guess_answer(self, user_guess):  # 유저 추측에 대한 결과. user_guess는 string으로 된 4자리 숫자
         strike = 0
         ball = 0
         out = 0
@@ -95,11 +96,10 @@ class NumberBaseball(Game):
                 out += 1
 
         return (strike, ball, out)
-    
+
     def get_answer(self):
         return self.answer
 
     def initiate_answer(self):
         print("숫자야구 정답 초기화")
         self.answer = ""
-            

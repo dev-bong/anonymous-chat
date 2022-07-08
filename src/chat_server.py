@@ -160,7 +160,7 @@ class ClientManager:  # 클라이언트, 유저 관리자
             return True
 
         ##### 숫자야구 #####
-        if msg == "/야구시작": # 숫자야구 정답 생성
+        if msg == "/야구시작":  # 숫자야구 정답 생성
             if not self.room.number_baseball.get_answer():
                 self.room.number_baseball.make_random_answer()
                 msg = "숫자야구 시작!"
@@ -169,8 +169,8 @@ class ClientManager:  # 클라이언트, 유저 관리자
                 msg = "이미 진행중인 숫자야구 게임이 있습니다"
                 self.send_msg(msg)
             return True
-        
-        if msg.startswith("/야구 "): # 숫자야구 정답 추측
+
+        if msg.startswith("/야구 "):  # 숫자야구 정답 추측
             if not self.room.number_baseball.get_answer():
                 msg = "진행중인 숫자야구 게임이 없습니다"
                 self.send_msg(msg)
@@ -178,12 +178,14 @@ class ClientManager:  # 클라이언트, 유저 관리자
             else:
                 _, guess_num = msg.split(" ", maxsplit=1)
                 print(f"숫자야구 추측 : {guess_num}")
-                if self.room.number_baseball.guess_format_check(guess_num): # 포맷 검사 (4자리 숫자인지)
+                if self.room.number_baseball.guess_format_check(
+                    guess_num
+                ):  # 포맷 검사 (4자리 숫자인지)
                     guess_res = self.room.number_baseball.guess_answer(guess_num)
-                    
-                    if guess_res == (4, 0, 0): # 정답인 경우
+
+                    if guess_res == (4, 0, 0):  # 정답인 경우
                         msg = f"{nick_name} 숫자야구 우승! (정답 : {guess_num})"
-                        self.room.number_baseball.initiate_answer() # 정답 맞추면 초기화
+                        self.room.number_baseball.initiate_answer()  # 정답 맞추면 초기화
                         self.room.push_msg_to_room(msg)
                     else:
                         strike, ball, out = guess_res
