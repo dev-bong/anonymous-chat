@@ -13,6 +13,7 @@ class Room:  # 채팅방
         self.usable_colors = [1, 2, 3, 4, 5, 6]  # 사용 가능한 색상코드들
         self.colors_in_use = []  # 사용중인 색상코드들
         self.chosung_game = games.ChosungQuiz()
+        self.number_baseball = games.NumberBaseball()
 
     def ready_to_connect(self):  # 서버 소켓 생성 및 bind, listen
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,7 +99,7 @@ class ClientManager:  # 클라이언트, 유저 관리자
                 self.leave()
                 break
 
-            if self.process_game_cmd(msg, only_nickname):
+            if self.process_cmd(msg, only_nickname):
                 continue
 
             print(msg, type(msg))
@@ -112,28 +113,89 @@ class ClientManager:  # 클라이언트, 유저 관리자
         self.listen_socket.close()
         print("Current clients :", self.room.client_list)
 
-    def process_game_cmd(self, msg, nick_name):
-        continue_flag = False
+    def process_cmd(self, msg, nick_name):
 
+        if msg == "/도움":
+            help_text = """
+            명령어 사용법
+            \"/\" + \"명령어\" 조합으로 사용
+
+            명령어 리스트
+            /도움
+                - 도움말 출력
+            /문제 + [한글 텍스트]
+                - 초성퀴즈 문제 등록
+                - 한글과 띄어쓰기만 가능
+                - 덮어쓰기 가능
+            /야구시작
+                - 숫자야구 시작
+                - 중복없는 4자리 난수 생성
+                - 숫자는 0 ~ 9
+                - 덮어쓰기 불가
+            /야구 + [숫자]
+                - 숫자야구 정답 추측
+                - 4자리 숫자 입력
+                - 1S 2B 1O 형식 리턴
+            """
+            self.send_msg(help_text)
+            return True
+
+        ##### 초성퀴즈 #####
         if msg.startswith("/문제 "):  # 초성퀴즈 문제 등록
             msg = (
-                "문제 : "
+                "초성퀴즈 문제 : "
                 + self.room.chosung_game.put_chosung_quiz(msg)
                 + f"(출제 : {nick_name})"
             )
             self.room.push_msg_to_room(msg)
-            continue_flag = True
+            return True
         elif self.room.chosung_game.exist_answer() and self.room.chosung_game.is_answer(
             msg
         ):  # 초성퀴즈 정답 맞춘 경우
             ans = self.room.chosung_game.get_answer()
-            msg = f"{nick_name} 님 정답입니다! ({ans})"
+            msg = f"{nick_name} 초성퀴즈 우승! (정답 : {ans})"
             print("초성퀴즈 정답! 초성퀴즈 초기화")
             self.room.push_msg_to_room(msg)
             self.room.chosung_game.initiate_answer()
-            continue_flag = True
+            return True
 
-        return continue_flag
+        ##### 숫자야구 #####
+        if msg == "/야구시작": # 숫자야구 정답 생성
+            if not self.room.number_baseball.get_answer():
+                self.room.number_baseball.make_random_answer()
+                msg = "숫자야구 시작!"
+                self.room.push_msg_to_room(msg)
+            else:
+                msg = "이미 진행중인 숫자야구 게임이 있습니다"
+                self.send_msg(msg)
+            return True
+        
+        if msg.startswith("/야구 "): # 숫자야구 정답 추측
+            if not self.room.number_baseball.get_answer():
+                msg = "진행중인 숫자야구 게임이 없습니다"
+                self.send_msg(msg)
+                return True
+            else:
+                _, guess_num = msg.split(" ", maxsplit=1)
+                print(f"숫자야구 추측 : {guess_num}")
+                if self.room.number_baseball.guess_format_check(guess_num): # 포맷 검사 (4자리 숫자인지)
+                    guess_res = self.room.number_baseball.guess_answer(guess_num)
+                    
+                    if guess_res == (4, 0, 0): # 정답인 경우
+                        msg = f"{nick_name} 숫자야구 우승! (정답 : {guess_num})"
+                        self.room.number_baseball.initiate_answer() # 정답 맞추면 초기화
+                        self.room.push_msg_to_room(msg)
+                    else:
+                        strike, ball, out = guess_res
+                        msg = f"{guess_num} -> {strike}S {ball}B {out}O ({nick_name})"
+                        self.room.push_msg_to_room(msg)
+                    return True
+                else:
+                    msg = "올바른 포맷이 아닙니다. 4자리 숫자를 입력해주세요"
+                    self.send_msg(msg)
+                    return True
+
+        return False
 
 
 def server_start():
